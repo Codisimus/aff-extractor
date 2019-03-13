@@ -80,10 +80,9 @@ public class App {
 
                 //add data from current table to "master" output object
                 AcsUtil.mergeCountyData(sdr, countyDataList);
-
-                stateDataResponseList.add(sdr);
                 logger.debug("Table: {} done", tableName);
             }
+            stateDataResponseList.add(sdr);
         }
 
         String extractedData = gson.toJson(usDataResponse);
