@@ -25,26 +25,47 @@ public class AffUtil {
             ColumnInfo columnInfo = new ColumnInfo();
             columnInfo.setColumnCode(columnCode);
             String prefix = columnCode.substring(0, columnCode.indexOf("_"));
-            String suffix = columnCode.substring(columnCode.indexOf("_")+1);
+            String mid = "";
+            String suffix = "";
+            if(columnCode.contains("_EST_")){
+                mid = columnCode.substring(columnCode.indexOf("_")+1, columnCode.lastIndexOf("_"));
+                suffix = columnCode.substring(columnCode.lastIndexOf("_")+1);
+            } else {
+                suffix = columnCode.substring(columnCode.indexOf("_")+1);
+            }
+
             for (Map.Entry<String, AffCell> entry : cells.entrySet()) {
                 AffCell cell = entry.getValue();
                 boolean foundPrefixMatch = false;
                 boolean foundSuffixMatch = false;
+                boolean foundMidMatch = false;
                 String prefixLabel = "";
                 String suffixLabel = "";
+                String midLabel = "";
+                if(mid.length() == 0){
+                    foundMidMatch = true;
+                }
                 for (Map.Entry<String, AffCategory> category : cell.getCategories().entrySet()) {
                     if (prefix.equals(category.getValue().getId())){
                         foundPrefixMatch = true;
                         prefixLabel = category.getValue().getLabel();
+                    }
+                    if (mid.equals(category.getValue().getId())){
+                        foundMidMatch = true;
+                        midLabel = category.getValue().getLabel();
                     }
                     if (suffix.equals(category.getValue().getId())){
                         suffixLabel = category.getValue().getLabel();
                         foundSuffixMatch = true;
                     }
                 }
-                if(foundPrefixMatch && foundSuffixMatch){
+                if(foundPrefixMatch && foundSuffixMatch && foundMidMatch){
                     columnInfo.setColumnId(entry.getKey());
-                    columnInfo.setColumnDescription(prefixLabel + ": " + suffixLabel);
+                    if(mid.length() > 0){
+                        columnInfo.setColumnDescription(prefixLabel + ": " + midLabel + ": " + suffixLabel);
+                    } else {
+                        columnInfo.setColumnDescription(prefixLabel + ": " + suffixLabel);
+                    }
                 }
             }
             columnInfoList.add(columnInfo);
