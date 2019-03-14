@@ -1,31 +1,38 @@
 import java.util.*;
 
+/**
+ * Static maps for data to pull from Census tables and geographic identifier mappings
+ */
 class DataMaps {
-    static final Map<String, List<String>> dataTableMap;
+    static final Map<String, List<String>> acsTableMap;
     static {
-        Map<String, List<String>> aMap = new HashMap<>();
-        aMap.put("DP03", Arrays.asList("HC01_VC36", "HC01_VC85", "HC03_VC171"));
-        aMap.put("DP02", Arrays.asList("HC03_VC03", "HC03_VC11"));
-        aMap.put("B05001", Arrays.asList("HD01_VD01", "HD01_VD06"));
-        aMap.put("DP05", Arrays.asList("HC03_VC88", "HC03_VC94", "HC03_VC95", "HC03_VC96", "HC03_VC97", "HC03_VC98", "HC03_VC99", "HC03_VC100"));
-        aMap.put("B01001", Arrays.asList("HD01_VD01", "HD01_VD06", "HD01_VD07", "HD01_VD08", "HD01_VD09", "HD01_VD10"));
-
-        //TODO: P2 does not seem to be part of ACS 5 year estimates...leave out for now
-        //aMap.put("P2", Arrays.asList("D001", "D002", "D005"));
+        Map<String, List<String>> acsMap = new HashMap<>();
+        acsMap.put("DP03", Arrays.asList("HC01_VC36", "HC01_VC85", "HC03_VC171"));
+        acsMap.put("DP02", Arrays.asList("HC03_VC03", "HC03_VC11"));
+        acsMap.put("B05001", Arrays.asList("HD01_VD01", "HD01_VD06"));
+        acsMap.put("DP05", Arrays.asList("HC03_VC88", "HC03_VC94", "HC03_VC95", "HC03_VC96", "HC03_VC97", "HC03_VC98", "HC03_VC99", "HC03_VC100"));
+        acsMap.put("B01001", Arrays.asList("HD01_VD01", "HD01_VD06", "HD01_VD07", "HD01_VD08", "HD01_VD09", "HD01_VD10"));
 
         //TODO: add support to parse these IDs in AcsUtil.findColumnKeys()
 //        aMap.put("S0701", Arrays.asList("HC02_EST_VC01", "HC03_EST_VC01", "HC04_EST_VC01", "HC05_EST_VC01"));
 //        aMap.put("S2301", Arrays.asList("HC04_EST_VC01"));
 //        aMap.put("S1501", Arrays.asList("HC01_EST_VC16"));
-        dataTableMap = Collections.unmodifiableMap(aMap);
+        acsTableMap = Collections.unmodifiableMap(acsMap);
+    }
+
+    static final Map<String, List<String>> decennialTableMap;
+    static {
+        Map<String, List<String>> map = new HashMap<>();
+        map.put("P2", Arrays.asList("D001", "D002", "D005"));
+        decennialTableMap = Collections.unmodifiableMap(map);
     }
 
     //State codes pulled from https://www2.census.gov/programs-surveys/acs/tech_docs/code_lists/2013_ACS_Code_Lists.pdf#
     static final Map<String, String> stateMap;
     static {
-        Map<String, String> aMap = new HashMap<>();
-        aMap.put("AL", "0400000US01.05000");
-        aMap.put("NY", "0400000US36.05000");
+        Map<String, String> map = new HashMap<>();
+        map.put("AL", "0400000US01.05000");
+        map.put("NY", "0400000US36.05000");
         //TODO: add the rest of the states
 //        001 Alabama
 //        002 Alaska
@@ -85,6 +92,6 @@ class DataMaps {
 //        056 Wyoming
 //        057-059 Not Used
 
-        stateMap = Collections.unmodifiableMap(aMap);
+        stateMap = Collections.unmodifiableMap(map);
     }
 }

@@ -40,8 +40,14 @@ public class HttpUtil {
     }
 
     public static String makeRequest(String path, String apiKey) throws Exception {
+        logger.debug("Making HTTP request for: {}", path);
+        long requestStartTime = System.currentTimeMillis();
+
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpGet httpget = buildRequest(path, Language.EN, apiKey);
-        return httpClient.execute(httpget, new StringResponseHandler());
+        String response = httpClient.execute(httpget, new StringResponseHandler());
+        logger.debug("Request time: {} secs", ((System.currentTimeMillis() - requestStartTime) / 1000.0));
+        return response;
+
     }
 }

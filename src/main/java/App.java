@@ -18,6 +18,7 @@ public class App {
 
     private static final String BASE_PATH = "/programs/ACS/datasets";
     private static final String PROGRAM = "ACS";
+    private static final String OUTPUT_FILENAME = "US_data.json";
 
     public static void main(String [] args) {
         long startTime = System.currentTimeMillis();
@@ -25,13 +26,8 @@ public class App {
         GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting();
         Gson gson = gsonBuilder.create();
 
-        CommandLine cmd = null;
-        try {
-            cmd = parseCommandLineArgs(args);
-        } catch (ParseException pe){
-            logger.error(pe);
-            System.exit(-1);
-        }
+        CommandLine cmd = parseCommandLineArgs(args);
+
         String year = cmd.getOptionValue("y");
         String apiKey = cmd.getOptionValue("k");
         String dataset = year.substring(2) + "_5YR";
@@ -45,28 +41,25 @@ public class App {
         usDataResponse.setStates(stateDataResponseList);
         usDataResponse.setProgram(PROGRAM);
 
+        logger.debug("---------------------------");
         for (Map.Entry<String, String> stateMap : DataMaps.stateMap.entrySet()) {
             String state = stateMap.getKey();
             String stateGeoId = stateMap.getValue();
 
-            logger.debug("Fetching data for state: {}", state);
             StateDataResponse sdr = new StateDataResponse();
             sdr.setState(state);
 
-            //iterate for all tables/columns in the dataTableMap
-            for (Map.Entry<String, List<String>> dataMapEntry : DataMaps.dataTableMap.entrySet()) {
+            logger.debug("Fetching data for state: {}", state);
+            //iterate for all tables/columns in the acsTableMap
+            for (Map.Entry<String, List<String>> dataMapEntry : DataMaps.acsTableMap.entrySet()) {
                 String tableName = dataMapEntry.getKey();
                 List<String> columnsToPullFromTable = dataMapEntry.getValue();
-
-                logger.debug("Making HTTP Request for year: {} table: {}", year, tableName);
-                long requestStartTime = System.currentTimeMillis();
 
                 //fetch data table from AFF
                 String fullPath = BASE_PATH + "/" + dataset + "/tables/" + tableName + "/data/" + stateGeoId;
                 String acsResponseStr;
                 try {
                     acsResponseStr = HttpUtil.makeRequest(fullPath, apiKey);
-                    logger.debug("Request time: {} secs", (System.currentTimeMillis() - requestStartTime / 1000.0));
                 } catch (Exception e) {
                     logger.warn("Could not fetch table: {} \n {}", tableName, e);
                     continue;
@@ -81,18 +74,17 @@ public class App {
                 //add data from current table to "master" output object
                 AcsUtil.mergeCountyData(sdr, countyDataList);
                 logger.debug("Table: {} done", tableName);
+                logger.debug("---------------------------");
             }
             stateDataResponseList.add(sdr);
         }
 
         String extractedData = gson.toJson(usDataResponse);
-        logger.debug(extractedData);
+        logger.info("Writing data to: {}", OUTPUT_FILENAME);
 
-        try {
-            FileWriter fw = new FileWriter("US_data.json");
+        try (FileWriter fw = new FileWriter(OUTPUT_FILENAME)){
             fw.write(extractedData);
             fw.flush();
-            fw.close();
         } catch (Exception e) {
             logger.error(e);
         }
@@ -109,22 +101,24 @@ public class App {
      * @return CommandLine obj containing commandLine args
      * @throws ParseException
      */
-    private static CommandLine parseCommandLineArgs(String[] args) throws ParseException {
+    private static CommandLine parseCommandLineArgs(String[] args){
         Options options = new Options();
-        options.addOption("y", true, "year");
-        options.addOption("k", true, "API Key for American Fact Finder API");
 
-        CommandLineParser parser = new DefaultParser();
-        CommandLine cmd = parser.parse(options, args, true);
+        Option yearOption = new Option("y", true, "year");
+        yearOption.setRequired(true);
+        options.addOption(yearOption);
 
-        if(!cmd.hasOption("y")) {
-            logger.error("No year provided");
+        Option keyOption = new Option("k", true, "API Key for American Fact Finder API");
+        keyOption.setRequired(true);
+        options.addOption(keyOption);
+
+        try {
+            CommandLineParser parser = new DefaultParser();
+            return parser.parse(options, args, true);
+        } catch (ParseException pe){
+            logger.error(pe);
+            System.exit(-1);
         }
-
-        if(!cmd.hasOption("k")) {
-            logger.error("No API Key provided");
-        }
-
-        return cmd;
+        return null;
     }
 }
