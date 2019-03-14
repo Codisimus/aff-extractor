@@ -21,7 +21,7 @@ public class HttpUtil {
     private static final String DEFAULT_DATA_PATH = "/service/data/v1/";
     private static final String DEFAULT_MAP_PATH = "/service/map/v1/";
 
-    public static HttpGet buildRequest(String path, Language language, String apiKey) throws URISyntaxException {
+    private static HttpGet buildRequest(String path, Language language, String apiKey) throws URISyntaxException {
         URI uri = new URIBuilder()
                 .setScheme("https")
                 .setHost(AFF_HOST)

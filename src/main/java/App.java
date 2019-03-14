@@ -42,7 +42,7 @@ public class App {
 
         USDataResponse usDataResponse = new USDataResponse(year, new ArrayList<>());
 
-        logger.debug("---------------------------");
+        logger.info("---------------------------");
         for (Map.Entry<String, String> stateMap : DataMaps.stateMap.entrySet()) {
             String state = stateMap.getKey();
             String stateGeoId = stateMap.getValue();
@@ -74,8 +74,8 @@ public class App {
 
                 //add data from current table to "master" output object
                 AffUtil.mergeCountyData(sdr, countyDataList);
-                logger.debug("Table: {} done", tableName);
-                logger.debug("---------------------------");
+                logger.info("Table: {} done", tableName);
+                logger.info("---------------------------");
             }
             usDataResponse.getStates().add(sdr);
         }
