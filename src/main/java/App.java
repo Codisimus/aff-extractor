@@ -22,7 +22,8 @@ public class App {
     private static final String BASE_PATH = "/programs/ACS/datasets";
     private static final String PROGRAM = "ACS";
     private static final String JSON_OUTPUT_FILENAME = "aff_data.json";
-    //TODO:
+
+    //TODO: output to CSV
     private static final String CSV_OUTPUT_FILENAME = "aff_data.csv";
 
     //TODO: Add support for the DEC dataset to pull P2 Table

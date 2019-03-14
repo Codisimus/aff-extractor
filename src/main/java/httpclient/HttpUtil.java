@@ -27,6 +27,7 @@ public class HttpUtil {
                 .setHost(AFF_HOST)
                 .setPath(DEFAULT_DATA_PATH + language + path)
                 .setParameter("key", apiKey)
+                .setParameter("maxResults", "91")
                 .build();
 
         HttpGet httpget = new HttpGet(uri);
