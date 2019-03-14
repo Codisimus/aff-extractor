@@ -5,12 +5,15 @@ import domain.CountyData;
 import domain.DataPoint;
 import domain.StateDataResponse;
 import domain.aff.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class AffUtil {
+    private final static Logger logger = LogManager.getLogger(AffUtil.class.getName());
 
     /**
      * Iterate through the Map of cells and pull out the column keys that match the data columns we're interested in
@@ -87,14 +90,19 @@ public class AffUtil {
                     countyData.setLabel(category.getValue().getLabel());
                 }
             }
-            //TODO: replace with Java .stream() for efficiency sake
-            for (Map.Entry<String, AffRowData> affRowDataEntry : affRow.getCells().entrySet()){
+
+            outerfor: for (Map.Entry<String, AffRowData> affRowDataEntry : affRow.getCells().entrySet()){
                 for(ColumnInfo columnInfo: columnInfoList){
-                    if(columnInfo.getColumnId().equals(affRowDataEntry.getKey())){
-                        DataPoint dataPoint = new DataPoint();
-                        dataPoint.setDescription(columnInfo.getColumnDescription());
-                        dataPoint.setValue(affRowDataEntry.getValue().getValue());
-                        countyData.getDataPoints().put(tableName + "_" + columnInfo.getColumnCode(), dataPoint);
+                    if(columnInfo.getColumnId() != null) {
+                        if (columnInfo.getColumnId().equals(affRowDataEntry.getKey())) {
+                            DataPoint dataPoint = new DataPoint();
+                            dataPoint.setDescription(columnInfo.getColumnDescription());
+                            dataPoint.setValue(affRowDataEntry.getValue().getValue());
+                            countyData.getDataPoints().put(tableName + "_" + columnInfo.getColumnCode(), dataPoint);
+                        }
+                    } else {
+                        logger.warn("No column: {} in table: {} for: {}", columnInfo.getColumnCode(), tableName, countyData.getLabel());
+                        break outerfor;
                     }
                 }
             }

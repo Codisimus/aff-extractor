@@ -21,7 +21,9 @@ public class App {
 
     private static final String BASE_PATH = "/programs/ACS/datasets";
     private static final String PROGRAM = "ACS";
-    private static final String OUTPUT_FILENAME = "aff_data.json";
+    private static final String JSON_OUTPUT_FILENAME = "aff_data.json";
+    //TODO:
+    private static final String CSV_OUTPUT_FILENAME = "aff_data.csv";
 
     //TODO: Add support for the DEC dataset to pull P2 Table
     //private static final String P2_PATH = "/data/v1/en/programs/DEC/datasets/10_SF1/tables/P2/data/0400000US36.05000";
@@ -81,9 +83,9 @@ public class App {
         }
 
         String extractedData = gson.toJson(usDataResponse);
-        logger.info("Writing data to: {}", OUTPUT_FILENAME);
+        logger.info("Writing data to: {}", JSON_OUTPUT_FILENAME);
 
-        try (FileWriter fw = new FileWriter(OUTPUT_FILENAME)){
+        try (FileWriter fw = new FileWriter(JSON_OUTPUT_FILENAME)){
             fw.write(extractedData);
             fw.flush();
         } catch (Exception e) {
