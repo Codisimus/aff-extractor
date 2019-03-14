@@ -1,20 +1,24 @@
 package utils;
 
-import domain.*;
+import domain.ColumnInfo;
+import domain.CountyData;
+import domain.DataPoint;
+import domain.StateDataResponse;
+import domain.aff.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class AcsUtil {
+public class AffUtil {
 
     /**
      * Iterate through the Map of cells and pull out the column keys that match the data columns we're interested in
-     * @param cells
+     * @param cells cells from AFF header. Describes data contained within that column of the table
      * @param columns columns to pull eg. 'HC03_VC171'
-     * @return
+     * @return list of ColumnInfo objects
      */
-    public static List<ColumnInfo> findColumnKeys(Map<String, AcsCell> cells, List<String> columns){
+    private static List<ColumnInfo> findColumnKeys(Map<String, AffCell> cells, List<String> columns){
         List<ColumnInfo> columnInfoList = new ArrayList<>();
 
         for(String columnCode: columns) {
@@ -22,13 +26,13 @@ public class AcsUtil {
             columnInfo.setColumnCode(columnCode);
             String prefix = columnCode.substring(0, columnCode.indexOf("_"));
             String suffix = columnCode.substring(columnCode.indexOf("_")+1);
-            for (Map.Entry<String, AcsCell> entry : cells.entrySet()) {
-                AcsCell cell = entry.getValue();
+            for (Map.Entry<String, AffCell> entry : cells.entrySet()) {
+                AffCell cell = entry.getValue();
                 boolean foundPrefixMatch = false;
                 boolean foundSuffixMatch = false;
                 String prefixLabel = "";
                 String suffixLabel = "";
-                for (Map.Entry<String, AcsCategory> category : cell.getCategories().entrySet()) {
+                for (Map.Entry<String, AffCategory> category : cell.getCategories().entrySet()) {
                     if (prefix.equals(category.getValue().getId())){
                         foundPrefixMatch = true;
                         prefixLabel = category.getValue().getLabel();
@@ -48,27 +52,27 @@ public class AcsUtil {
         return columnInfoList;
     }
 
-    public static List<CountyData> extractDataFromResponse(String tableName, AcsResponse acsResponse, List<String> columnsToPullFromTable) {
-        List<ColumnInfo> columnInfoList = AcsUtil.findColumnKeys(acsResponse.getData().getHeader().getCells(), columnsToPullFromTable);
+    public static List<CountyData> extractDataFromResponse(String tableName, AffResponse affResponse, List<String> columnsToPullFromTable) {
+        List<ColumnInfo> columnInfoList = AffUtil.findColumnKeys(affResponse.getData().getHeader().getCells(), columnsToPullFromTable);
 
-        List<AcsRow> rows = acsResponse.getData().getRows();
+        List<AffRow> rows = affResponse.getData().getRows();
 
         List<CountyData> countyDataList = new ArrayList<>();
-        for(AcsRow acsRow: rows){
+        for(AffRow affRow : rows){
             CountyData countyData = new CountyData();
-            for (Map.Entry<String, AcsCategory> category : acsRow.getCategories().entrySet()){
+            for (Map.Entry<String, AffCategory> category : affRow.getCategories().entrySet()){
                 if("GEO".equals(category.getKey())){
                     countyData.setGeoId(category.getValue().getId());
                     countyData.setLabel(category.getValue().getLabel());
                 }
             }
             //TODO: replace with Java .stream() for efficiency sake
-            for (Map.Entry<String, AcsRowData> acsRowDataEntry : acsRow.getCells().entrySet()){
+            for (Map.Entry<String, AffRowData> affRowDataEntry : affRow.getCells().entrySet()){
                 for(ColumnInfo columnInfo: columnInfoList){
-                    if(columnInfo.getColumnId().equals(acsRowDataEntry.getKey())){
+                    if(columnInfo.getColumnId().equals(affRowDataEntry.getKey())){
                         DataPoint dataPoint = new DataPoint();
                         dataPoint.setDescription(columnInfo.getColumnDescription());
-                        dataPoint.setValue(acsRowDataEntry.getValue().getValue());
+                        dataPoint.setValue(affRowDataEntry.getValue().getValue());
                         countyData.getDataPoints().put(tableName + "_" + columnInfo.getColumnCode(), dataPoint);
                     }
                 }

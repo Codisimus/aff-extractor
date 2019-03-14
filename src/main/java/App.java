@@ -1,11 +1,14 @@
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import domain.*;
+import domain.CountyData;
+import domain.StateDataResponse;
+import domain.USDataResponse;
+import domain.aff.AffResponse;
 import httpclient.HttpUtil;
-import utils.AcsUtil;
 import org.apache.commons.cli.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import utils.AffUtil;
 
 import java.io.FileWriter;
 import java.util.ArrayList;
@@ -18,7 +21,10 @@ public class App {
 
     private static final String BASE_PATH = "/programs/ACS/datasets";
     private static final String PROGRAM = "ACS";
-    private static final String OUTPUT_FILENAME = "US_data.json";
+    private static final String OUTPUT_FILENAME = "aff_data.json";
+
+    //TODO: Add support for the DEC dataset to pull P2 Table
+    //private static final String P2_PATH = "/data/v1/en/programs/DEC/datasets/10_SF1/tables/P2/data/0400000US36.05000";
 
     public static void main(String [] args) {
         long startTime = System.currentTimeMillis();
@@ -30,16 +36,11 @@ public class App {
 
         String year = cmd.getOptionValue("y");
         String apiKey = cmd.getOptionValue("k");
-        String dataset = year.substring(2) + "_5YR";
+        String dataset = year.substring(2) + "_5YR"; //ACS dataset
 
         logger.info("Starting data extraction for: {} {}...", PROGRAM, dataset);
 
-        List<StateDataResponse> stateDataResponseList = new ArrayList<>();
-        USDataResponse usDataResponse = new USDataResponse();
-        usDataResponse.setDataset(dataset);
-        usDataResponse.setYear(year);
-        usDataResponse.setStates(stateDataResponseList);
-        usDataResponse.setProgram(PROGRAM);
+        USDataResponse usDataResponse = new USDataResponse(year, new ArrayList<>());
 
         logger.debug("---------------------------");
         for (Map.Entry<String, String> stateMap : DataMaps.stateMap.entrySet()) {
@@ -57,26 +58,26 @@ public class App {
 
                 //fetch data table from AFF
                 String fullPath = BASE_PATH + "/" + dataset + "/tables/" + tableName + "/data/" + stateGeoId;
-                String acsResponseStr;
+                String affResponseStr;
                 try {
-                    acsResponseStr = HttpUtil.makeRequest(fullPath, apiKey);
+                    affResponseStr = HttpUtil.makeRequest(fullPath, apiKey);
                 } catch (Exception e) {
                     logger.warn("Could not fetch table: {} \n {}", tableName, e);
                     continue;
                 }
 
                 //deserialize String response to POJO
-                AcsResponse acsResponse = gson.fromJson(acsResponseStr, AcsResponse.class);
+                AffResponse affResponse = gson.fromJson(affResponseStr, AffResponse.class);
 
                 //extract desired columns from data table
-                List<CountyData> countyDataList = AcsUtil.extractDataFromResponse(tableName, acsResponse, columnsToPullFromTable);
+                List<CountyData> countyDataList = AffUtil.extractDataFromResponse(tableName, affResponse, columnsToPullFromTable);
 
                 //add data from current table to "master" output object
-                AcsUtil.mergeCountyData(sdr, countyDataList);
+                AffUtil.mergeCountyData(sdr, countyDataList);
                 logger.debug("Table: {} done", tableName);
                 logger.debug("---------------------------");
             }
-            stateDataResponseList.add(sdr);
+            usDataResponse.getStates().add(sdr);
         }
 
         String extractedData = gson.toJson(usDataResponse);
@@ -99,7 +100,6 @@ public class App {
      *
      * @param args program args
      * @return CommandLine obj containing commandLine args
-     * @throws ParseException
      */
     private static CommandLine parseCommandLineArgs(String[] args){
         Options options = new Options();

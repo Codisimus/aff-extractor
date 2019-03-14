@@ -1,7 +1,7 @@
-package domain;
+package domain.aff;
 
-public class AcsRowData {
-    String value;
+public class AffRowData {
+    private String value;
 
     public String getValue() {
         return value;
@@ -13,7 +13,7 @@ public class AcsRowData {
 
     @Override
     public String toString() {
-        return "AcsRowData{" +
+        return "AffRowData{" +
                 "value='" + value + '\'' +
                 '}';
     }

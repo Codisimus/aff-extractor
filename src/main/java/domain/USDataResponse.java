@@ -3,17 +3,16 @@ package domain;
 import java.util.List;
 
 public class USDataResponse {
-    private String dataset;
     private String year;
-    private String program;
     private List<StateDataResponse> states;
 
-    public String getDataset() {
-        return dataset;
+    public USDataResponse() {
     }
 
-    public void setDataset(String dataset) {
-        this.dataset = dataset;
+    public USDataResponse(String year,List<StateDataResponse> states) {
+
+        this.year = year;
+        this.states = states;
     }
 
     public String getYear() {
@@ -22,14 +21,6 @@ public class USDataResponse {
 
     public void setYear(String year) {
         this.year = year;
-    }
-
-    public String getProgram() {
-        return program;
-    }
-
-    public void setProgram(String program) {
-        this.program = program;
     }
 
     public List<StateDataResponse> getStates() {
@@ -43,9 +34,7 @@ public class USDataResponse {
     @Override
     public String toString() {
         return "USDataResponse{" +
-                "dataset='" + dataset + '\'' +
-                ", year='" + year + '\'' +
-                ", program='" + program + '\'' +
+                "year='" + year + '\'' +
                 ", states=" + states +
                 '}';
     }

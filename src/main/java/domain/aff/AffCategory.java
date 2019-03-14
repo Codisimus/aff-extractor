@@ -1,8 +1,8 @@
-package domain;
+package domain.aff;
 
-public class AcsCategory {
-    String id;
-    String label;
+public class AffCategory {
+    private String id;
+    private String label;
 
     public String getId() {
         return id;
@@ -22,7 +22,7 @@ public class AcsCategory {
 
     @Override
     public String toString() {
-        return "AcsCategory{" +
+        return "AffCategory{" +
                 "id='" + id + '\'' +
                 ", label='" + label + '\'' +
                 '}';

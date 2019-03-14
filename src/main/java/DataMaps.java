@@ -13,19 +13,20 @@ class DataMaps {
         acsMap.put("DP05", Arrays.asList("HC03_VC88", "HC03_VC94", "HC03_VC95", "HC03_VC96", "HC03_VC97", "HC03_VC98", "HC03_VC99", "HC03_VC100"));
         acsMap.put("B01001", Arrays.asList("HD01_VD01", "HD01_VD06", "HD01_VD07", "HD01_VD08", "HD01_VD09", "HD01_VD10"));
 
-        //TODO: add support to parse these IDs in AcsUtil.findColumnKeys()
+        //TODO: add support to parse these IDs in AffUtil.findColumnKeys()
 //        aMap.put("S0701", Arrays.asList("HC02_EST_VC01", "HC03_EST_VC01", "HC04_EST_VC01", "HC05_EST_VC01"));
 //        aMap.put("S2301", Arrays.asList("HC04_EST_VC01"));
 //        aMap.put("S1501", Arrays.asList("HC01_EST_VC16"));
         acsTableMap = Collections.unmodifiableMap(acsMap);
     }
 
-    static final Map<String, List<String>> decennialTableMap;
+    //NOT USED YET
+    /*static final Map<String, List<String>> decennialTableMap;
     static {
         Map<String, List<String>> map = new HashMap<>();
         map.put("P2", Arrays.asList("D001", "D002", "D005"));
         decennialTableMap = Collections.unmodifiableMap(map);
-    }
+    }*/
 
     //State codes pulled from https://www2.census.gov/programs-surveys/acs/tech_docs/code_lists/2013_ACS_Code_Lists.pdf#
     static final Map<String, String> stateMap;

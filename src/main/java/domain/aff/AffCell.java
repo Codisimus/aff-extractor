@@ -1,11 +1,11 @@
-package domain;
+package domain.aff;
 
 import java.util.Map;
 
-public class AcsCell {
-    String valueType;
-    String valueScale;
-    Map<String, AcsCategory> categories;
+public class AffCell {
+    private String valueType;
+    private String valueScale;
+    private Map<String, AffCategory> categories;
 
     public String getValueType() {
         return valueType;
@@ -23,17 +23,17 @@ public class AcsCell {
         this.valueScale = valueScale;
     }
 
-    public Map<String, AcsCategory> getCategories() {
+    public Map<String, AffCategory> getCategories() {
         return categories;
     }
 
-    public void setCategories(Map<String, AcsCategory> categories) {
+    public void setCategories(Map<String, AffCategory> categories) {
         this.categories = categories;
     }
 
     @Override
     public String toString() {
-        return "AcsCell{" +
+        return "AffCell{" +
                 "valueType='" + valueType + '\'' +
                 ", valueScale='" + valueScale + '\'' +
                 ", categories=" + categories +

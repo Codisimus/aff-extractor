@@ -1,8 +1,8 @@
-package domain;
+package domain.aff;
 
-public class AcsResponse {
-    String kind;
-    Data data;
+public class AffResponse {
+    private String kind;
+    private AffData data;
 
     public String getKind() {
         return kind;
@@ -12,17 +12,17 @@ public class AcsResponse {
         this.kind = kind;
     }
 
-    public Data getData() {
+    public AffData getData() {
         return data;
     }
 
-    public void setData(Data data) {
+    public void setData(AffData data) {
         this.data = data;
     }
 
     @Override
     public String toString() {
-        return "AcsResponse{" +
+        return "AffResponse{" +
                 "kind='" + kind + '\'' +
                 ", data=" + data +
                 '}';

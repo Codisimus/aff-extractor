@@ -1,30 +1,30 @@
-package domain;
+package domain.aff;
 
 import java.util.List;
 
-public class Data {
-    AcsHeader header;
-    List<AcsRow> rows;
+public class AffData {
+    private AffHeader header;
+    private List<AffRow> rows;
 
-    public AcsHeader getHeader() {
+    public AffHeader getHeader() {
         return header;
     }
 
-    public void setHeader(AcsHeader header) {
+    public void setHeader(AffHeader header) {
         this.header = header;
     }
 
-    public List<AcsRow> getRows() {
+    public List<AffRow> getRows() {
         return rows;
     }
 
-    public void setRows(List<AcsRow> rows) {
+    public void setRows(List<AffRow> rows) {
         this.rows = rows;
     }
 
     @Override
     public String toString() {
-        return "Data{" +
+        return "AffData{" +
                 "header=" + header +
                 ", rows=" + rows +
                 '}';
