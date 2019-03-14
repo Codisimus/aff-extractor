@@ -16,7 +16,8 @@ public class AffUtil {
     private final static Logger logger = LogManager.getLogger(AffUtil.class.getName());
 
     /**
-     * Iterate through the Map of cells and pull out the column keys that match the data columns we're interested in
+     * Iterate through the Map of cells and pull out the column keys that match the data columns we're interested in.
+     *
      * @param cells cells from AFF header. Describes data contained within that column of the table
      * @param columns columns to pull eg. 'HC03_VC171'
      * @return list of ColumnInfo objects
@@ -76,6 +77,14 @@ public class AffUtil {
         return columnInfoList;
     }
 
+    /**
+     * Given the "column codes" within a Census table, pull data for only those columns.
+     *
+     * @param tableName Census table name
+     * @param affResponse response object to pull from
+     * @param columnsToPullFromTable "column codes" to pull
+     * @return
+     */
     public static List<CountyData> extractDataFromResponse(String tableName, AffResponse affResponse, List<String> columnsToPullFromTable) {
         List<ColumnInfo> columnInfoList = AffUtil.findColumnKeys(affResponse.getData().getHeader().getCells(), columnsToPullFromTable);
 
@@ -111,6 +120,12 @@ public class AffUtil {
         return countyDataList;
     }
 
+    /**
+     * Helper method to merge CountyData from one table to the main output response object.
+     *
+     * @param sdr main output response object
+     * @param countyDataList CountyData to be merged
+     */
     public static void mergeCountyData(StateDataResponse sdr, List<CountyData> countyDataList){
         for(CountyData countyData: countyDataList){
             String countyGeoId = countyData.getGeoId();
