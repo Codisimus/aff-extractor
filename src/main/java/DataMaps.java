@@ -4,6 +4,7 @@ import java.util.*;
  * Static maps for data to pull from Census tables and geographic identifier mappings
  */
 class DataMaps {
+    //Defines requested Table columns
     static final Map<String, List<String>> acsTableMap;
     static {
         Map<String, List<String>> acsMap = new TreeMap<>();
@@ -16,6 +17,21 @@ class DataMaps {
         acsMap.put("S2301", Arrays.asList("HC04_EST_VC01"));
         acsMap.put("S1501", Arrays.asList("HC01_EST_VC16"));
         acsTableMap = Collections.unmodifiableMap(acsMap);
+    }
+
+    //Defines requested Table columns by Element ID
+    static final Map<String, List<String>> acsTableElementMap;
+    static {
+        Map<String, List<String>> acsMap = new TreeMap<>();
+        acsMap.put("DP03", Arrays.asList("C89", "C231", "C438"));
+        acsMap.put("DP02", Arrays.asList("C3", "C34"));
+        acsMap.put("B05001", Arrays.asList("B05001_1_EST", "B05001_6_EST"));
+        acsMap.put("DP05", Arrays.asList("C255", "C279", "C283", "C287", "C291", "C295", "C299", "C303"));
+        acsMap.put("B01001", Arrays.asList("B01001_1_EST", "B01001_6_EST", "B01001_7_EST", "B01001_8_EST", "B01001_9_EST", "B01001_10_EST"));
+        acsMap.put("S0701", Arrays.asList("C3", "C5", "C7", "C9"));
+        acsMap.put("S2301", Arrays.asList("C7"));
+        acsMap.put("S1501", Arrays.asList("C79"));
+        acsTableElementMap = Collections.unmodifiableMap(acsMap);
     }
 
     //State codes pulled from https://www2.census.gov/programs-surveys/acs/tech_docs/code_lists/2013_ACS_Code_Lists.pdf#
