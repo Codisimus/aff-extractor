@@ -121,7 +121,7 @@ public class App {
         } catch (ParseException pe){
             logger.error(pe);
             System.exit(-1);
+            throw new RuntimeException("Unreachable Statement");
         }
-        return null;
     }
 }
