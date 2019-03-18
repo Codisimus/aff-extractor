@@ -11,12 +11,12 @@ import java.io.IOException;
 public class StringResponseHandler implements ResponseHandler<String> {
     public String handleResponse(final HttpResponse response) throws ParseException, IOException  {
         int status = response.getStatusLine().getStatusCode();
+        HttpEntity entity = response.getEntity();
+        String content = null == entity ? "" : EntityUtils.toString(entity);
         if (status >= 200 && status < 300) {
-            HttpEntity entity = response.getEntity();
-            return null == entity ? "" : EntityUtils.toString(entity);
-
+            return content;
         } else {
-            throw new IOException("Response Status Code: " + status);
+            throw new IOException("Response Status Code: " + status + " - " + content);
         }
     }
 }
