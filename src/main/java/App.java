@@ -19,6 +19,8 @@ public class App {
 
     private final static Logger logger = LogManager.getLogger(App.class.getName());
 
+    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
     private static final String BASE_PATH = "/programs/ACS/datasets";
     private static final String PROGRAM = "ACS";
     private static final String JSON_OUTPUT_FILENAME = "aff_data.json";
@@ -32,9 +34,6 @@ public class App {
     public static void main(String [] args) {
         long startTime = System.currentTimeMillis();
 
-        GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting();
-        Gson gson = gsonBuilder.create();
-
         CommandLine cmd = parseCommandLineArgs(args);
 
         String year = cmd.getOptionValue("y");
@@ -43,6 +42,13 @@ public class App {
 
         logger.info("Starting data extraction for: {} {}...", PROGRAM, dataset);
 
+        generateJson(year, dataset, apiKey);
+
+        long totalEndTime = System.currentTimeMillis();
+        logger.info("Total time: {} secs", ((totalEndTime-startTime)/1000.0));
+    }
+
+    private static void generateJson(String year, String dataset, String apiKey) {
         USDataResponse usDataResponse = new USDataResponse(year, new ArrayList<>());
 
         logger.info("---------------------------");
@@ -92,9 +98,6 @@ public class App {
         } catch (Exception e) {
             logger.error(e);
         }
-
-        long totalEndTime = System.currentTimeMillis();
-        logger.info("Total time: {} secs", ((totalEndTime-startTime)/1000.0));
     }
 
     /**
