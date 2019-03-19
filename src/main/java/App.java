@@ -1,11 +1,18 @@
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.opencsv.CSVWriter;
 import domain.CountyData;
 import domain.StateDataResponse;
 import domain.USDataResponse;
 import domain.aff.AffResponse;
 import httpclient.HttpUtil;
+import java.io.File;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedList;
 import org.apache.commons.cli.*;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import utils.AffUtil;
@@ -25,7 +32,6 @@ public class App {
     private static final String PROGRAM = "ACS";
     private static final String JSON_OUTPUT_FILENAME = "aff_data.json";
 
-    //TODO: output to CSV
     private static final String CSV_OUTPUT_FILENAME = "aff_data.csv";
 
     //TODO: Add support for the DEC dataset to pull P2 Table
@@ -42,7 +48,8 @@ public class App {
 
         logger.info("Starting data extraction for: {} {}...", PROGRAM, dataset);
 
-        generateJson(year, dataset, apiKey);
+        //generateJson(year, dataset, apiKey);
+        generateCsv(year, dataset, apiKey);
 
         long totalEndTime = System.currentTimeMillis();
         logger.info("Total time: {} secs", ((totalEndTime-startTime)/1000.0));
@@ -95,6 +102,84 @@ public class App {
         try (FileWriter fw = new FileWriter(JSON_OUTPUT_FILENAME)){
             fw.write(extractedData);
             fw.flush();
+        } catch (Exception e) {
+            logger.error(e);
+        }
+    }
+
+    private static void generateCsv(String year, String dataset, String apiKey) {
+        Map<String, CountyData> counties = new HashMap<>();
+        logger.info("---------------------------");
+        //iterate for all tables/columns in the acsTableMap
+        for (Map.Entry<String, List<String>> dataMapEntry : DataMaps.acsTableElementMap.entrySet()) {
+            String tableName = dataMapEntry.getKey();
+            List<String> columnsToPullFromTable = dataMapEntry.getValue();
+
+            //fetch data table from AFF
+            String fullPath = BASE_PATH + "/" + dataset + "/tables/" + tableName + "/data/"
+                              + StringUtils.join(DataMaps.stateMap.values(), ",") + "/"
+                              + StringUtils.join(columnsToPullFromTable, ",");
+            String affResponseStr;
+            try {
+                affResponseStr = HttpUtil.makeRequest(fullPath, apiKey);
+            } catch (Exception e) {
+                logger.warn("Could not fetch table: {} \n {}", tableName, e);
+                continue;
+            }
+
+            //deserialize String response to POJO
+            AffResponse affResponse = gson.fromJson(affResponseStr, AffResponse.class);
+
+            //extract desired columns from data table
+            Map<String, CountyData> results = AffUtil.extractDataFromResponse(tableName, affResponse);
+
+            //add data from current table to "master" output object
+            results.forEach((k, v) -> counties.merge(k, v, (master, supplemental) -> {
+                master.getDataPoints().putAll(supplemental.getDataPoints());
+                return master;
+            }));
+            logger.info("Table: {} done", tableName);
+            logger.info("---------------------------");
+        }
+
+        List<CountyData> countyDataList = new ArrayList<>(counties.values());
+        countyDataList.sort(Comparator.comparing(CountyData::getGeoId));
+
+        File file = new File(year + "_" + CSV_OUTPUT_FILENAME);
+        logger.info("Writing data to: {}", file.getPath());
+
+        List<String> columnHeaders = new LinkedList<>();
+        List<String> columnHeaderLabels = new LinkedList<>();
+        countyDataList.forEach(county -> county.getDataPoints().forEach((key, value) -> {
+            if (!columnHeaders.contains(key)) {
+                columnHeaders.add(key);
+                columnHeaderLabels.add(value.getDescription());
+            }
+        }));
+
+        List<String[]> rows = new LinkedList<>();
+        for (CountyData county : countyDataList) {
+            List<String> values = new LinkedList<>();
+            values.add(county.getGeoId());
+            values.add(county.getLabel());
+            for (String column : columnHeaders) {
+                try {
+                    values.add(county.getDataPoints().get(column).getValue());
+                } catch (Exception e) {
+                    values.add("");
+                }
+            }
+            rows.add(values.toArray(new String[0]));
+        }
+
+        columnHeaders.addAll(0, Arrays.asList("Geo ID", "Geography"));
+        columnHeaderLabels.addAll(0, Arrays.asList("County ID", "County"));
+
+        try (CSVWriter writer = new CSVWriter(new FileWriter(file))) {
+            writer.writeNext(columnHeaders.toArray(new String[0]));
+            writer.writeNext(columnHeaderLabels.toArray(new String[0]));
+            writer.writeAll(rows);
+            writer.flushQuietly();
         } catch (Exception e) {
             logger.error(e);
         }
