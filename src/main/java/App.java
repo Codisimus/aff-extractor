@@ -7,10 +7,12 @@ import domain.USDataResponse;
 import domain.aff.AffResponse;
 import httpclient.HttpUtil;
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map.Entry;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -28,40 +30,51 @@ public class App {
 
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-    private static final String BASE_PATH = "/programs/ACS/datasets";
-    private static final String PROGRAM = "ACS";
     private static final String JSON_OUTPUT_FILENAME = "aff_data.json";
-
     private static final String CSV_OUTPUT_FILENAME = "aff_data.csv";
-
-    //TODO: Add support for the DEC dataset to pull P2 Table
-    //private static final String P2_PATH = "/data/v1/en/programs/DEC/datasets/10_SF1/tables/P2/data/0400000US36.05000";
 
     public static void main(String [] args) {
         long startTime = System.currentTimeMillis();
 
+        try {
+            DataConfigurations.load();
+        } catch (IOException e) {
+            logger.error("Failed to load configuration files", e);
+            System.exit(-1);
+            throw new RuntimeException("Unreachable Statement");
+        }
+
         CommandLine cmd = parseCommandLineArgs(args);
 
+        String program = cmd.getOptionValue("p");
         String year = cmd.getOptionValue("y");
-        String apiKey = cmd.getOptionValue("k");
-        String dataset = year.substring(2) + "_5YR"; //ACS dataset
+        String dataset = year.substring(2) + "_" + cmd.getOptionValue("d");
 
-        logger.info("Starting data extraction for: {} {}...", PROGRAM, dataset);
+        logger.info("Starting data extraction for: {}...", dataset);
 
-        //generateJson(year, dataset, apiKey);
-        generateCsv(year, dataset, apiKey);
+        switch (DataConfigurations.getOutputFormat()) {
+            case "json":
+                generateJson(year, dataset);
+                break;
+            case "csv":
+                generateCsv(program, dataset);
+                break;
+            default:
+                throw new UnsupportedOperationException(DataConfigurations.getOutputFormat()
+                                                        + " is not a supported output format");
+        }
 
         long totalEndTime = System.currentTimeMillis();
         logger.info("Total time: {} secs", ((totalEndTime-startTime)/1000.0));
     }
 
-    private static void generateJson(String year, String dataset, String apiKey) {
+    private static void generateJson(String year, String dataset) {
         USDataResponse usDataResponse = new USDataResponse(year, new ArrayList<>());
 
         logger.info("---------------------------");
-        for (Map.Entry<String, String> stateMap : DataMaps.stateMap.entrySet()) {
-            String state = stateMap.getKey();
-            String stateGeoId = stateMap.getValue();
+        for (Entry<Object, Object> stateMap : DataConfigurations.getGeoIdMap().entrySet()) {
+            String state = (String) stateMap.getKey();
+            String stateGeoId = (String) stateMap.getValue();
 
             StateDataResponse sdr = new StateDataResponse();
             sdr.setState(state);
@@ -73,10 +86,10 @@ public class App {
                 List<String> columnsToPullFromTable = dataMapEntry.getValue();
 
                 //fetch data table from AFF
-                String fullPath = BASE_PATH + "/" + dataset + "/tables/" + tableName + "/data/" + stateGeoId;
+                String fullPath = "/programs/acs/datasets/" + dataset + "/tables/" + tableName + "/data/" + stateGeoId;
                 String affResponseStr;
                 try {
-                    affResponseStr = HttpUtil.makeRequest(fullPath, apiKey);
+                    affResponseStr = HttpUtil.makeRequest(fullPath, DataConfigurations.getApiKey());
                 } catch (Exception e) {
                     logger.warn("Could not fetch table: {} \n {}", tableName, e);
                     continue;
@@ -107,21 +120,19 @@ public class App {
         }
     }
 
-    private static void generateCsv(String year, String dataset, String apiKey) {
+    private static void generateCsv(String program, String dataset) {
         Map<String, CountyData> counties = new HashMap<>();
         logger.info("---------------------------");
-        //iterate for all tables/columns in the acsTableMap
-        for (Map.Entry<String, List<String>> dataMapEntry : DataMaps.acsTableElementMap.entrySet()) {
-            String tableName = dataMapEntry.getKey();
-            List<String> columnsToPullFromTable = dataMapEntry.getValue();
+        for (String tableName : DataConfigurations.getTableNames(program)) {
+            String[] columnsToPullFromTable = DataConfigurations.getTableColumns(program, tableName);
 
             //fetch data table from AFF
-            String fullPath = BASE_PATH + "/" + dataset + "/tables/" + tableName + "/data/"
-                              + StringUtils.join(DataMaps.stateMap.values(), ",") + "/"
-                              + StringUtils.join(columnsToPullFromTable, ",");
+            String fullPath = "/programs/" + program + "/datasets/" + dataset + "/tables/" + tableName + "/data/"
+                              + StringUtils.join(DataConfigurations.getGeoIdMap().values(), ",")
+                              + "/" + StringUtils.join(columnsToPullFromTable, ",");
             String affResponseStr;
             try {
-                affResponseStr = HttpUtil.makeRequest(fullPath, apiKey);
+                affResponseStr = HttpUtil.makeRequest(fullPath, DataConfigurations.getApiKey());
             } catch (Exception e) {
                 logger.warn("Could not fetch table: {} \n {}", tableName, e);
                 continue;
@@ -131,7 +142,8 @@ public class App {
             AffResponse affResponse = gson.fromJson(affResponseStr, AffResponse.class);
 
             //extract desired columns from data table
-            Map<String, CountyData> results = AffUtil.extractDataFromResponse(tableName, affResponse);
+            Map<String, CountyData> results = AffUtil
+                .extractDataFromResponse(tableName, affResponse);
 
             //add data from current table to "master" output object
             results.forEach((k, v) -> counties.merge(k, v, (master, supplemental) -> {
@@ -145,7 +157,7 @@ public class App {
         List<CountyData> countyDataList = new ArrayList<>(counties.values());
         countyDataList.sort(Comparator.comparing(CountyData::getGeoId));
 
-        File file = new File(year + "_" + CSV_OUTPUT_FILENAME);
+        File file = new File(program + "_" + dataset + "_" + CSV_OUTPUT_FILENAME);
         logger.info("Writing data to: {}", file.getPath());
 
         List<String> columnHeaders = new LinkedList<>();
@@ -195,13 +207,17 @@ public class App {
     private static CommandLine parseCommandLineArgs(String[] args){
         Options options = new Options();
 
+        Option programOption = new Option("p", true, "program");
+        programOption.setRequired(true);
+        options.addOption(programOption);
+
         Option yearOption = new Option("y", true, "year");
         yearOption.setRequired(true);
         options.addOption(yearOption);
 
-        Option keyOption = new Option("k", true, "API Key for American Fact Finder API");
-        keyOption.setRequired(true);
-        options.addOption(keyOption);
+        Option datasetOption = new Option("d", true, "dataset");
+        datasetOption.setRequired(true);
+        options.addOption(datasetOption);
 
         try {
             CommandLineParser parser = new DefaultParser();
