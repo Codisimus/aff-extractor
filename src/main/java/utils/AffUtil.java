@@ -5,6 +5,9 @@ import domain.CountyData;
 import domain.DataPoint;
 import domain.StateDataResponse;
 import domain.aff.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map.Entry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -140,5 +143,62 @@ public class AffUtil {
                 }
             }
         }
+    }
+
+    /**
+     * Maps the provided AffResponse to CountyData. Multiple rows are joined together by geo ID.
+     *
+     * @param tableName Census table name
+     * @param affResponse response object to pull from
+     * @return A Map of Geo ID to CountyData
+     */
+    public static Map<String, CountyData> extractDataFromResponse(String tableName, AffResponse affResponse) {
+        Map<String, AffCell> headerCells = affResponse.getData().getHeader().getCells();
+
+        Map<String, CountyData> counties = new HashMap<>();
+        for (AffRow affRow : affResponse.getData().getRows()){
+            AffCategory category = affRow.getCategories().get("GEO");
+            String geoId = category.getId();
+            CountyData countyData;
+            if (counties.containsKey(geoId)) {
+                countyData = counties.get(geoId);
+            } else {
+                countyData = new CountyData();
+                countyData.setGeoId(geoId);
+                countyData.setLabel(category.getLabel());
+                counties.put(geoId, countyData);
+            }
+
+            for (Entry<String, AffRowData> affRowDataEntry : affRow.getCells().entrySet()){
+                String columnId = affRowDataEntry.getKey();
+                if (headerCells.containsKey(columnId)) {
+                    DataPoint dataPoint = new DataPoint();
+                    dataPoint.setDescription(getColumnDescription(headerCells.get(columnId)));
+                    dataPoint.setValue(affRowDataEntry.getValue().getValue());
+                    countyData.getDataPoints().put(tableName + "_" + columnId, dataPoint);
+                } else {
+                    logger.warn("No column: {} in table: {} for: {}", columnId, tableName, countyData.getLabel());
+                }
+            }
+        }
+        return counties;
+    }
+
+    /**
+     * Contructs a description using data pulled from the provided AffCell
+     *
+     * @param cell cell from AFF header. Describes data contained within that column of the table
+     * @return description pulled from the AffCell
+     */
+    private static String getColumnDescription(AffCell cell) {
+        StringBuilder sb = new StringBuilder();
+        Iterator<AffCategory> itr = cell.getCategories().values().iterator();
+        while (itr.hasNext()) {
+            sb.append(itr.next().getLabel());
+            if (itr.hasNext()) {
+                sb.append(": ");
+            }
+        }
+        return sb.toString();
     }
 }
