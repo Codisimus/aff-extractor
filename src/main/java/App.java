@@ -54,6 +54,11 @@ public class App {
 
         switch (DataConfigurations.getOutputFormat()) {
             case "json":
+                if (!program.equals("ACS")) {
+                    logger.error("Only the program 'ACS' is supported for an output format of json");
+                    System.exit(-1);
+                    throw new RuntimeException("Unreachable Statement");
+                }
                 generateJson(year, dataset);
                 break;
             case "csv":
@@ -86,7 +91,7 @@ public class App {
                 List<String> columnsToPullFromTable = dataMapEntry.getValue();
 
                 //fetch data table from AFF
-                String fullPath = "/programs/acs/datasets/" + dataset + "/tables/" + tableName + "/data/" + stateGeoId;
+                String fullPath = "/programs/ACS/datasets/" + dataset + "/tables/" + tableName + "/data/" + stateGeoId;
                 String affResponseStr;
                 try {
                     affResponseStr = HttpUtil.makeRequest(fullPath, DataConfigurations.getApiKey());
@@ -110,9 +115,10 @@ public class App {
         }
 
         String extractedData = gson.toJson(usDataResponse);
-        logger.info("Writing data to: {}", JSON_OUTPUT_FILENAME);
+        File file = new File("ACS" + "_" + dataset + "_" + JSON_OUTPUT_FILENAME);
+        logger.info("Writing data to: {}", file.getPath());
 
-        try (FileWriter fw = new FileWriter(JSON_OUTPUT_FILENAME)){
+        try (FileWriter fw = new FileWriter(file)){
             fw.write(extractedData);
             fw.flush();
         } catch (Exception e) {
