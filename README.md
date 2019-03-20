@@ -1,6 +1,6 @@
 # US Census - American Fact Finder Data Collection Tool
 
-## This app pulls a specific set of data from the American Fact Finder API and creates a .json file containing those data elements for all counties within all US states.
+## This app pulls a specific set of data from the American Fact Finder API and creates a .json or .csv file containing those data elements for all counties within all US states.
 
 American Fact Finder website - https://factfinder.census.gov/service/RESTImplementation.html
 
