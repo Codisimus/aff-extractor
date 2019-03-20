@@ -25,7 +25,8 @@ dependencies {
 jar {
     manifest {
         attributes(
-                'Main-Class': 'App'
+                'Main-Class': 'App',
+                'Class-Path': '.'
         )
     }
     from {
