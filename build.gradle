@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.tr'
-version '0.0.1'
+version '0.1.0'
 mainClassName = 'App'
 sourceCompatibility = 1.8
 
