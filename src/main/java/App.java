@@ -36,19 +36,19 @@ public class App {
     public static void main(String [] args) {
         long startTime = System.currentTimeMillis();
 
-        try {
-            DataConfigurations.load();
-        } catch (IOException e) {
-            logger.error("Failed to load configuration files", e);
-            System.exit(-1);
-            throw new RuntimeException("Unreachable Statement");
-        }
-
         CommandLine cmd = parseCommandLineArgs(args);
 
         String program = cmd.getOptionValue("p");
         String year = cmd.getOptionValue("y");
         String dataset = year.substring(2) + "_" + cmd.getOptionValue("d");
+
+        try {
+            DataConfigurations.load(program);
+        } catch (IOException e) {
+            logger.error("Failed to load configuration files", e);
+            System.exit(-1);
+            throw new RuntimeException("Unreachable Statement");
+        }
 
         logger.info("Starting data extraction for: {}...", dataset);
 
@@ -123,8 +123,8 @@ public class App {
     private static void generateCsv(String program, String dataset) {
         Map<String, CountyData> counties = new HashMap<>();
         logger.info("---------------------------");
-        for (String tableName : DataConfigurations.getTableNames(program)) {
-            String[] columnsToPullFromTable = DataConfigurations.getTableColumns(program, tableName);
+        for (String tableName : DataConfigurations.getTableNames()) {
+            String[] columnsToPullFromTable = DataConfigurations.getTableColumns(tableName);
 
             //fetch data table from AFF
             String fullPath = "/programs/" + program + "/datasets/" + dataset + "/tables/" + tableName + "/data/"
